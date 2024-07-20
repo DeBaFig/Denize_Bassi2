@@ -1,0 +1,44 @@
+name: GCP
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    name: Setup Gcloud Account
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Git checkout
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Login to GCP
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/setup-gcloud@v0.2.0'
+        with:
+          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+            # gcloud configure docker
+            
+      - name: Login to Docker Hub (or your container registry)
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          
+          # gcloud configure docker
+      - name: Configure Docker
+        run: gcloud auth configure-docker --quiet
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t debafig/desafio-devops-denize .
+          docker push debafig/desafio-devops-denize:latest
+
+      # deploy image
+      - name: Deploy Docker image
+        run: gcloud run deploy site --image debafig/desafio-devops-denize:latest --region us-central1 --memory 128Mi --min-instances 0 --max-instances 1 --platform managed --port 80 --allow-unauthenticated
