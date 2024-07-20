@@ -2,7 +2,8 @@ name: GCP
 
 on:
   push:
-    branches: *
+    branches:
+      - '*'         # matches every branch that doesn't contain a '/'
 
 jobs:
   deploy:
